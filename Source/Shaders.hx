@@ -34,9 +34,10 @@ class SShader {
 #end
   }
 
-  public function oshader(vb:VertexBuffer3D, ib:IndexBuffer3D, color:Array<Float>) {
+  public function oshader(vb:VertexBuffer3D, ib:IndexBuffer3D, color:Array<Float>, mvp:flash.geom.Matrix3D) {
 #if flash
     cast(oshad,OShader).color = new flash.geom.Vector3D(color[0], color[1], color[2], color[3]);
+    cast(oshad,OShader).mvp = mvp;
     oshad.bind(c,vb);
     c.drawTriangles(ib);
     oshad.unbind(c);
@@ -49,9 +50,10 @@ class SShader {
 #end
   }
 
-  public function dshader(vb:VertexBuffer3D, ib:IndexBuffer3D, color:Array<Float>) {
+  public function dshader(vb:VertexBuffer3D, ib:IndexBuffer3D, color:Array<Float>, mvp:flash.geom.Matrix3D) {
 #if flash
     cast(dshad,DShader).color = new flash.geom.Vector3D(color[0], color[1], color[2], color[3]);
+    cast(dshad,DShader).mvp = mvp;
     dshad.bind(c,vb);
     c.drawTriangles(ib);
     dshad.unbind(c);
@@ -63,8 +65,9 @@ class SShader {
     c.drawTriangles(ib);
 #end
   }
-  public function nowrite(vb:VertexBuffer3D, ib:IndexBuffer3D) {
+  public function nowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, mvp:flash.geom.Matrix3D) {
 #if flash
+    cast(nowri,NOWrite).mvp = mvp;
     nowri.bind(c,vb);
     c.drawTriangles(ib);
     nowri.unbind(c);
@@ -75,8 +78,9 @@ class SShader {
     c.drawTriangles(ib);
 #end
   }
-  public function onowrite(vb:VertexBuffer3D, ib:IndexBuffer3D) {
+  public function onowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, mvp:flash.geom.Matrix3D) {
 #if flash
+    cast(onowri,ONOWrite).mvp = mvp;
     onowri.bind(c,vb);
     c.drawTriangles(ib);
     onowri.unbind(c);
@@ -93,17 +97,13 @@ class SShader {
 class OShader extends hxsl.Shader {
   static var SRC = {
     var input : { pos:Float2, uv:Float2};
-                    function vertex() {
-                      var p = input.pos;
+                    function vertex(mvp:Matrix) {
                       uv = input.uv;
-                      //Seems I was too lazy to hook up a transform matrix. Sorry :/
-                      out = [p.x/400-.9, p.y*-1/300+1.0, .5, 1.0];
+                      out = [input.pos.x, input.pos.y, 0.0, 1.0] * mvp;
                     }
                     var uv:Float2;
                     function fragment(color:Float4) {
                       var f = uv.x*uv.x - uv.y;
-                      //var inside = lt(f, 0);
-                      //var aa = inside*sat(abs(f*.2)); //Some very very bad inner edge AA
                       kill(f*-1);
                       out = color;
                     }
@@ -113,9 +113,8 @@ class OShader extends hxsl.Shader {
 class DShader extends hxsl.Shader {
   static var SRC = {
     var input : { pos:Float2, uv:Float2};
-                    function vertex() {
-                      var p = input.pos;
-                      out = [p.x/400-.9, p.y*-1/300+1.0, .5, 1.0];
+                    function vertex(mvp:Matrix) {
+                      out = [input.pos.x, input.pos.y, 0.0, 1.0] * mvp;
                     }
                     function fragment(color:Float4) {
                       out = color;
@@ -126,10 +125,9 @@ class DShader extends hxsl.Shader {
 class ONOWrite extends hxsl.Shader {
   static var SRC = {
     var input : { pos:Float2, uv:Float2};
-                    function vertex() {
-                      var p = input.pos;
+                    function vertex(mvp:Matrix) {
                       uv = input.uv;
-                      out = [p.x/400-.9, p.y*-1/300+1.0, .5, 1.0];
+                      out = [input.pos.x, input.pos.y, 0.0, 1.0] * mvp;
                     }
                     var uv:Float2;
                     function fragment() {
@@ -143,9 +141,8 @@ class ONOWrite extends hxsl.Shader {
 class NOWrite extends hxsl.Shader {
   static var SRC = {
     var input : { pos:Float2, uv:Float2 };
-                    function vertex() {
-                      var p = input.pos;
-                      out = [p.x/400-.9, p.y*-1/300+1.0, .5, 1.0];
+                    function vertex(mvp:Matrix) {
+                      out = [input.pos.x, input.pos.y, 0.0, 1.0] * mvp;
                     }
                     function fragment() {
                       out = [0, 0, 0, 0];
