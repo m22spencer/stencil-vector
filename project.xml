@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+	
+	<meta title="Stencil-Vector" package="com.codex.vector" version="1.0.0" company="Codex" />
+	<app main="Main" path="Export" file="Main" />
+
+	<window fps="60" />
+
+	<source path="Source" />
+	
+	<haxelib name="svg" />
+	<haxelib name="openfl" />
+	
+	<icon path="Assets/openfl.svg" />
+
+	<haxelib name="hxsl" />
+	<haxelib name="openfl-stage3d" />
+	<haxelib name="stage3d-glsl" />
+	<window hardware="true"
+		allow-shaders="true"
+		require-shaders="true"
+		stencil-buffer="true" />
+	<!-- <window antialiasing="2" /> -->
+	<set name="SWF_VERSION" value="11.2" />
+</project>
