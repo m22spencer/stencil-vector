@@ -131,7 +131,7 @@ class ONOWrite extends hxsl.Shader {
                     function fragment() {
                       var f = uv.x*uv.x - uv.y;
                       kill(f*-1);
-                      out = [0,0,0,0];
+                      out = [0,1.0,0,.4];
                     }
                    }
 } 
@@ -143,7 +143,7 @@ class NOWrite extends hxsl.Shader {
                       out = [input.pos.x, input.pos.y, 0.0, 1.0] * mvp;
                     }
                     function fragment() {
-                      out = [0, 0, 0, 0];
+                      out = [0, 0, 1.0, .2];
                     }
                    }
 }

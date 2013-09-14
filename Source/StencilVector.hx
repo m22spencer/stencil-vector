@@ -73,7 +73,7 @@ class SVShape {
     bounds.x = min(x, bounds.x);
     bounds.width = max(x, bounds.width);
 
-    bounds.y = max(y, bounds.y);
+    bounds.y = min(y, bounds.y);
     bounds.height = max(y, bounds.height);
   }
 
@@ -84,40 +84,56 @@ class SVShape {
 
   public function addBezier(xs:Float, ys:Float, cx:Float, cy:Float, xe:Float, ye:Float) {
     beziers.push(xs); beziers.push(ys); beziers.push(0); beziers.push(0);
-    beziers.push(cx); beziers.push(cy); beziers.push(.5); beziers.push(.5);
+    beziers.push(cx); beziers.push(cy); beziers.push(.5); beziers.push(0);
     beziers.push(xe); beziers.push(ye); beziers.push(1); beziers.push(1);
-    bound(xs,ys); bound(cx,cy); bound(xe,ye);
+    bound(xs,ys); bound(xe,ye);
+    bound(cx,cy); 
   }
 
   public function buildVectors() {
     return { pivots:  pivots
            , beziers: beziers
-           , numPivots: (pivots.length >>> 1) - 2
-           , numBeziers: Std.int((pivots.length >>> 2) / 3)
+           , numPivots: pivots.length >>> 1
+           , numBeziers: beziers.length >>> 2
            , bounds: bounds 
            }
   }
 }
 
 class SVUtils {
-  static var fan_ib:IndexBuffer3D;
-  static var tri_ib:IndexBuffer3D;
-  static function init(c:Context3D, pivotMax:Int = 1000, bezierMax:Int = 1000) {
-    var num = (pivotMax-2) * 3;
-    fan_ib = c.createIndexBuffer(num);
+  static function indexBuffers(c:Context3D, pivots:Int, beziers:Int) {
     var fan = new Vector<UInt>();
-    for (i in 1...pivotMax-1) {
+    for (i in 1...pivots-1) {
       fan.push(0); fan.push(i); fan.push(i+1);
     }
-    fan_ib.uploadFromVector(fan, 0, num);
+    var fan_ib = if (fan.length == 0) null;
+    else {
+      var fan_ib = c.createIndexBuffer(fan.length);
+      fan_ib.uploadFromVector(fan, 0, fan.length);
+      fan_ib;
+    }
 
 
-    var num = bezierMax*3;
-    tri_ib = c.createIndexBuffer(num);
     var tri = new Vector<UInt>();
-    for (i in 0...num)
+    for (i in 0...beziers)
       tri.push(i);
-    tri_ib.uploadFromVector(tri, 0, num);
+    var tri_ib = if (tri.length == 0) null;
+    else {
+      var tri_ib = c.createIndexBuffer(tri.length);
+      tri_ib.uploadFromVector(tri, 0, tri.length);
+      tri_ib;
+    }
+
+    var bvec = new Vector<UInt>();
+    for (i in [0,1,2,0,2,3])
+      bvec.push(i);
+    var bounds_ib = c.createIndexBuffer(6);
+    bounds_ib.uploadFromVector(bvec, 0, 6);
+
+    return { fan_ib: fan_ib
+           , tri_ib: tri_ib
+           , bounds_ib: bounds_ib
+           }
   }
   
   static function mkBound(c:Context3D, r:Rectangle) {
@@ -138,51 +154,61 @@ class SVUtils {
     var pivot_vb = c.createVertexBuffer(def.pivots.length >>> 1, 2);
     pivot_vb.uploadFromVector(def.pivots, 0, def.pivots.length >>> 1);
 
-    var bezier_vb = c.createVertexBuffer(def.beziers.length >>> 2, 4);
-    bezier_vb.uploadFromVector(def.beziers, 0, def.beziers.length >>> 2);
+    var bezier_vb = if (def.beziers.length >>> 2 == 0) null;
+    else {
+      var bezier_vb = c.createVertexBuffer(def.beziers.length >>> 2, 4);
+      bezier_vb.uploadFromVector(def.beziers, 0, def.beziers.length >>> 2);
+      bezier_vb;
+    }
+
+    var ibs = indexBuffers(c, def.numPivots, def.numBeziers);
 
     return { pivots: pivot_vb
+           , fan_ib: ibs.fan_ib
            , beziers: bezier_vb
+           , tri_ib: ibs.tri_ib
            , numPivots: def.numPivots
            , numBeziers: def.numBeziers
            , bounds: mkBound(c, def.bounds)
+           , bounds_ib: ibs.bounds_ib
            }
   }
 
   public static function renderHWVectorDef(c:Context3D, def:HWVectorDef, m:Matrix3D) {
     function stencil(a:Int, b:Int, compareMode, action) {
-      #if flash
+#if flash
       c.setStencilReferenceValue(a,b);
       c.setStencilActions(Context3DTriangleFace.FRONT_AND_BACK, compareMode, action, action, action);
-      #end
+#end
     }
-    var sshader = null;
-    var tri_ib = null;
-    var fan_ib = null;
+    var sshader = S3D.sshader;
 
     stencil(0, 0, Context3DCompareMode.ALWAYS, Context3DStencilAction.SET);
-    sshader.nowrite(def.bounds, tri_ib, 2, m);
+    sshader.nowrite(def.bounds, def.bounds_ib, 2, m);
     
     stencil(1, 1, Context3DCompareMode.ALWAYS, Context3DStencilAction.INVERT);
-    sshader.nowrite(def.pivots, fan_ib, def.numPivots, m); 
-    sshader.onowrite(def.beziers, tri_ib, def.numBeziers, m);
+    if (def.fan_ib != null) sshader.nowrite(def.pivots, def.fan_ib, -1, m); 
+    if (def.tri_ib != null) sshader.onowrite(def.beziers, def.tri_ib, -1, m);
 
     
     stencil(0, 1, Context3DCompareMode.NOT_EQUAL, Context3DStencilAction.KEEP);
-    sshader.dshader(def.bounds, tri_ib, 2, [ 1, 0, 0, 1], m);
+    sshader.dshader(def.bounds, def.bounds_ib, 2, [ 1, 0, 0, 1], m);
   }
 }
 
-typedef HWVectorDef = { pivots:VertexBuffer3D
-                      , beziers:VertexBuffer3D
-                      , numPivots:Int //Number of triangles 
-                      , numBeziers:Int //Number of triangles
-                      , bounds:VertexBuffer3D
+typedef HWVectorDef = { pivots: VertexBuffer3D
+                      , fan_ib: IndexBuffer3D
+                      , beziers: VertexBuffer3D
+                      , tri_ib: IndexBuffer3D
+                      , numPivots: Int //Number of vertices 
+                      , numBeziers: Int //Number of vertices
+                      , bounds: VertexBuffer3D
+                      , bounds_ib: IndexBuffer3D
                       }
 
 typedef VectorDef = { pivots:Vector<Float>
                     , beziers:Vector<Float>
-                    , numPivots:Int //Number of triangles
+                    , numPivots:Int //Number of vertices
                     , numBeziers:Int //Number of tringles
                     , bounds:Rectangle
                     }
