@@ -29,7 +29,7 @@ class S3D {
 
   public static function onReady(e) {
     c = s.context3D;
-    c.enableErrorChecking = true;
+    //c.enableErrorChecking = true;
     var stage = flash.Lib.current.stage;
     c.configureBackBuffer (stage.stageWidth, stage.stageHeight, 0, true);
     c.setDepthTest(false, Context3DCompareMode.ALWAYS);
@@ -41,29 +41,46 @@ class S3D {
     var svg = Tiger.getTiger().join('\n');
 
     var data = new format.svg.SVGData (Xml.parse (svg), true);
-    /*
-    var gfx  = new format.svg.SVGRenderer(data).iterate(new UnwrapGfx(c));
-    */
+    var lionSV  = new format.svg.SVGRenderer(data).iterate(new UnwrapGfx()).getStencilVector();
 
     var sv = new StencilVector();
 
-    sv.beginFill(0x00ff00, .5);
-    sv.twinSquares();
-    sv.square(.5);
-    sv.arc();
-    sv.endFill();
-
     var render = sv.build(c);
+    var lionRender = lionSV.build(c);
 
-    var m = new Matrix3D();
-    m.appendScale(.5, .5, 1.0);
+    var ppm = new PerspectiveProjection();
+    ppm.fieldOfView = 90;
+    ppm.focalLength = 10;
+    ppm.projectionCenter = new Point(0, 0);
+
+    var pmatrix = ppm.toMatrix3D();
+
+    var tf = new flash.text.TextField();
+    flash.Lib.current.addChild(tf);
 
     var s = flash.Lib.current;
+    var w = s.stage.stageWidth;
+    var h = s.stage.stageHeight;
+    var hw = w *.5;
+    var hh = h *.5;
     c.setRenderCallback(function(_)
 
                         {
+                          var m = new Matrix3D();
+                          m.appendScale(1/600, 1/600, 1.0);
+                          m.appendTranslation(-.5, -.5, 0);
+                          m.appendRotation(180, new Vector3D(1, 0, 0, 0));
+                          m.appendRotation(-(s.mouseX - hw), new Vector3D(0, 1, 0, 0));
+                          m.appendRotation(-(s.mouseY - hh), new Vector3D(1, 0, 0, 0));
+                          m.appendTranslation(0, 0, 5);
+                          m.append(pmatrix);
+
                           c.clear(1,1,1,1);
-                          render(m);
+                          var time = haxe.Timer.stamp();
+                          lionRender(m);
+                          var now = haxe.Timer.stamp ();
+                          tf.text = "" + (now - time);
+
                           c.present();
                         });
   }

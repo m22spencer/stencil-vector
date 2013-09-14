@@ -4,7 +4,6 @@ import flash.display3D.*;
 
 class SShader {
   var c:Context3D;
-  var oshad:SS;
   var dshad:SS;
   var nowri:SS;
   var onowri:SS;
@@ -12,14 +11,10 @@ class SShader {
   public function new(c:Context3D) {
     this.c = c;
 #if flash
-    oshad = new OShader();
     dshad = new DShader();
     nowri = new NOWrite();
     onowri = new ONOWrite();
 #else
-    oshad = c.createProgram();
-    oshad.upload(Context3DProgramType.VERTEX.createShader(GLSLShaders.shaderv),
-                 Context3DProgramType.FRAGMENT.createShader(GLSLShaders.oshaderf));
     dshad = c.createProgram();
     dshad.upload(Context3DProgramType.VERTEX.createShader(GLSLShaders.shaderv),
                  Context3DProgramType.FRAGMENT.createShader(GLSLShaders.dshaderf));
@@ -34,23 +29,7 @@ class SShader {
 #end
   }
 
-  public function oshader(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, color:Array<Float>, mvp:flash.geom.Matrix3D) {
-#if flash
-    cast(oshad,OShader).color = new flash.geom.Vector3D(color[0], color[1], color[2], color[3]);
-    cast(oshad,OShader).mvp = mvp;
-    oshad.bind(c,vb);
-    c.drawTriangles(ib, 0, triangles);
-    oshad.unbind(c);
-#else
-    c.setProgram(oshad);
-    c.setGLSLProgramConstantsFromVector4("color", color);
-    c.setGLSLVertexBufferAt("pos", vb, 0, FLOAT_2);
-    c.setGLSLVertexBufferAt("uv" , vb, 2, FLOAT_2);
-    c.drawTriangles(ib, 0, triangles);
-#end
-  }
-
-  public function dshader(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, color:Array<Float>, mvp:flash.geom.Matrix3D) {
+  inline public function dshader(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, color:Array<Float>, mvp:flash.geom.Matrix3D) {
 #if flash
     cast(dshad,DShader).color = new flash.geom.Vector3D(color[0], color[1], color[2], color[3]);
     cast(dshad,DShader).mvp = mvp;
@@ -64,7 +43,7 @@ class SShader {
     c.drawTriangles(ib, 0, triangles);
 #end
   }
-  public function nowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, mvp:flash.geom.Matrix3D) {
+  inline public function nowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, mvp:flash.geom.Matrix3D) {
 #if flash
     cast(nowri,NOWrite).mvp = mvp;
     nowri.bind(c,vb);
@@ -76,7 +55,7 @@ class SShader {
     c.drawTriangles(ib, 0, triangles);
 #end
   }
-  public function onowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, mvp:flash.geom.Matrix3D) {
+  inline public function onowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, mvp:flash.geom.Matrix3D) {
 #if flash
     cast(onowri,ONOWrite).mvp = mvp;
     onowri.bind(c,vb);
@@ -92,22 +71,6 @@ class SShader {
 }
 
 #if flash
-class OShader extends hxsl.Shader {
-  static var SRC = {
-    var input : { pos:Float2, uv:Float2};
-                    function vertex(mvp:Matrix) {
-                      uv = input.uv;
-                      out = [input.pos.x, input.pos.y, 0.0, 1.0] * mvp;
-                    }
-                    var uv:Float2;
-                    function fragment(color:Float4) {
-                      var f = uv.x*uv.x - uv.y;
-                      kill(f*-1);
-                      out = color;
-                    }
-                   }
-}
-
 class DShader extends hxsl.Shader {
   static var SRC = {
     var input : { pos:Float2 };
@@ -130,8 +93,8 @@ class ONOWrite extends hxsl.Shader {
                     var uv:Float2;
                     function fragment() {
                       var f = uv.x*uv.x - uv.y;
-                      kill(f*-1);
-                      out = [0,1.0,0,.4];
+                      kill(f*-1); //All pixels on the inside of the curve will be less than <
+                      out = [0,0,0,0];
                     }
                    }
 } 
@@ -143,7 +106,7 @@ class NOWrite extends hxsl.Shader {
                       out = [input.pos.x, input.pos.y, 0.0, 1.0] * mvp;
                     }
                     function fragment() {
-                      out = [0, 0, 1.0, .2];
+                      out = [0,0,0,0];
                     }
                    }
 }
@@ -166,17 +129,6 @@ vuv = uv;
 gl_Position = vec4(pos.x/400.0-.9, pos.y*-1/300.0+1.0, .5, 1.0);
 }
 ";
-
-  public static var oshaderf = "
-varying vec2 vuv;
-uniform vec4 color;
-void main(void) {
-float f = vuv.x*vuv.x - vuv.y;
-if (f < 0)
-discard;
-else
-gl_FragColor = color;
-}";
 
   public static var dshaderf = "
 uniform vec4 color;
