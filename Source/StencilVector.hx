@@ -56,6 +56,16 @@ class StencilVector {
     justMoved = false;
     current = null;
   }
+
+  public function build(c:Context3D):Matrix3D->Void {
+    debug_assert(null == current);
+
+    var data = shapes.map(function(x) return SVUtils.makeHWVectorDef(c, x.buildVectors()));
+    return function(m) {
+      for (v in data)
+        SVUtils.renderHWVectorDef(c, v, m);
+    }
+  }
 }
 
 class SVShape {

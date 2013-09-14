@@ -53,9 +53,7 @@ class S3D {
     sv.arc();
     sv.endFill();
 
-    var ctx:Dynamic = untyped sv.shapes[0].buildVectors();
-
-    var hwctx = StencilVector.SVUtils.makeHWVectorDef(c, ctx);
+    var render = sv.build(c);
 
     var m = new Matrix3D();
     m.appendScale(.5, .5, 1.0);
@@ -65,7 +63,7 @@ class S3D {
 
                         {
                           c.clear(1,1,1,1);
-                          StencilVector.SVUtils.renderHWVectorDef(c, hwctx, m);
+                          render(m);
                           c.present();
                         });
   }
