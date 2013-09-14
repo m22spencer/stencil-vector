@@ -34,61 +34,59 @@ class SShader {
 #end
   }
 
-  public function oshader(vb:VertexBuffer3D, ib:IndexBuffer3D, color:Array<Float>, mvp:flash.geom.Matrix3D) {
+  public function oshader(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, color:Array<Float>, mvp:flash.geom.Matrix3D) {
 #if flash
     cast(oshad,OShader).color = new flash.geom.Vector3D(color[0], color[1], color[2], color[3]);
     cast(oshad,OShader).mvp = mvp;
     oshad.bind(c,vb);
-    c.drawTriangles(ib);
+    c.drawTriangles(ib, 0, triangles);
     oshad.unbind(c);
 #else
     c.setProgram(oshad);
     c.setGLSLProgramConstantsFromVector4("color", color);
     c.setGLSLVertexBufferAt("pos", vb, 0, FLOAT_2);
     c.setGLSLVertexBufferAt("uv" , vb, 2, FLOAT_2);
-    c.drawTriangles(ib);
+    c.drawTriangles(ib, 0, triangles);
 #end
   }
 
-  public function dshader(vb:VertexBuffer3D, ib:IndexBuffer3D, color:Array<Float>, mvp:flash.geom.Matrix3D) {
+  public function dshader(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, color:Array<Float>, mvp:flash.geom.Matrix3D) {
 #if flash
     cast(dshad,DShader).color = new flash.geom.Vector3D(color[0], color[1], color[2], color[3]);
     cast(dshad,DShader).mvp = mvp;
     dshad.bind(c,vb);
-    c.drawTriangles(ib);
+    c.drawTriangles(ib, 0, triangles);
     dshad.unbind(c);
 #else
     c.setProgram(dshad);
     c.setGLSLProgramConstantsFromVector4("color", color);
     c.setGLSLVertexBufferAt("pos", vb, 0, FLOAT_2);
-    c.setGLSLVertexBufferAt("uv" , vb, 2, FLOAT_2);
-    c.drawTriangles(ib);
+    c.drawTriangles(ib, 0, triangles);
 #end
   }
-  public function nowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, mvp:flash.geom.Matrix3D) {
+  public function nowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, mvp:flash.geom.Matrix3D) {
 #if flash
     cast(nowri,NOWrite).mvp = mvp;
     nowri.bind(c,vb);
-    c.drawTriangles(ib);
+    c.drawTriangles(ib, 0, triangles);
     nowri.unbind(c);
 #else
     c.setProgram(nowri);
     c.setGLSLVertexBufferAt("pos", vb, 0, FLOAT_2);
-    c.setGLSLVertexBufferAt("uv" , vb, 2, FLOAT_2);
-    c.drawTriangles(ib);
+    c.drawTriangles(ib, 0, triangles);
 #end
   }
-  public function onowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, mvp:flash.geom.Matrix3D) {
+  public function onowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, mvp:flash.geom.Matrix3D) {
 #if flash
     cast(onowri,ONOWrite).mvp = mvp;
     onowri.bind(c,vb);
-    c.drawTriangles(ib);
+    c.drawTriangles(ib, 0, triangles);
     onowri.unbind(c);
 #else
     c.setProgram(onowri);
     c.setGLSLVertexBufferAt("pos", vb, 0, FLOAT_2);
     c.setGLSLVertexBufferAt("uv" , vb, 2, FLOAT_2);
-    c.drawTriangles(ib);
+    c.drawTriangles(ib, 0, triangles);
 #end
   }
 }
@@ -112,7 +110,7 @@ class OShader extends hxsl.Shader {
 
 class DShader extends hxsl.Shader {
   static var SRC = {
-    var input : { pos:Float2, uv:Float2};
+    var input : { pos:Float2 };
                     function vertex(mvp:Matrix) {
                       out = [input.pos.x, input.pos.y, 0.0, 1.0] * mvp;
                     }
@@ -124,7 +122,7 @@ class DShader extends hxsl.Shader {
 
 class ONOWrite extends hxsl.Shader {
   static var SRC = {
-    var input : { pos:Float2, uv:Float2};
+    var input : { pos:Float2, uv:Float2 };
                     function vertex(mvp:Matrix) {
                       uv = input.uv;
                       out = [input.pos.x, input.pos.y, 0.0, 1.0] * mvp;
@@ -140,7 +138,7 @@ class ONOWrite extends hxsl.Shader {
 
 class NOWrite extends hxsl.Shader {
   static var SRC = {
-    var input : { pos:Float2, uv:Float2 };
+    var input : { pos:Float2 };
                     function vertex(mvp:Matrix) {
                       out = [input.pos.x, input.pos.y, 0.0, 1.0] * mvp;
                     }
