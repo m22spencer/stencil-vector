@@ -57,20 +57,20 @@ shapes  : $shapes
     for (shape in shapes) {
       if (shape.numTriangles == 0)
         continue;
-      c.clear(0, 0, 0, 0, 0, 0, Context3DClearMask.STENCIL);
 
-      /*
+      //*
+      c.clear(0, 0, 0, 0, 0, 0, Context3DClearMask.STENCIL);
+      /*/
       stencil(0, 0, Context3DCompareMode.ALWAYS, Context3DStencilAction.SET);
-      sshader.shade(v, i, shape.startIndex, shape.numTriangles, [0,1,0,.3], m);
-      */
+      fn(shape.boundIndex, 2, blank);
+      //*/
 
       stencil(1, 1, Context3DCompareMode.ALWAYS, Context3DStencilAction.INVERT);
       fn(shape.startIndex, shape.numTriangles, blank);
-      //sshader.shade(v, i, shape.startIndex, shape.numTriangles, blank, m);
 
       stencil(0, 1, Context3DCompareMode.NOT_EQUAL, Context3DStencilAction.KEEP);
       fn(shape.startIndex, shape.numTriangles, shape.color);
-      //sshader.shade(v, i, shape.startIndex, shape.numTriangles, shape.color, m);
+      //fn(shape.boundIndex, 2, shape.color);
     }
   }
 
@@ -125,25 +125,24 @@ shapes  : $shapes
 
   inline public function beginFill(color:Int, alpha:Float) {
     lastPivotIndex = vNum();
-    shapes.push(current = { startVertex  : lastPivotIndex
-                          , startIndex   : indices.length
-                          , numTriangles: 0
-                          , color       : Alg.mkColor(color, alpha)
-                          });
+    shapes.push(current = new DShape(lastPivotIndex, indices.length, 0, Alg.mkColor(color, alpha)));
   }
 
   inline public function endFill() {
-    shapes.push(current = { startVertex  : vNum()
-                          , startIndex   : indices.length
-                          , numTriangles: 0
-                          , color       : [0,0,0,0]
-                          });
+    shapes.push(current = new DShape(vNum(), indices.length, 0, [.0, .0, .0, .0]));
     justMoved = false;
   }
 }
 
-typedef DShape = { startVertex : Int
-                 , startIndex  : Int
-                 , numTriangles: Int
-                 , color       : Array<Float>
-                 }
+class DShape {
+  public var startVertex:Int;
+  public var startIndex:Int;
+  public var numTriangles:Int;
+  public var color:Array<Float>;
+  public function new(startVertex, startIndex, numTriangles, color) { //val startVertex ...... hint hint haxe
+    this.startVertex = startVertex;
+    this.startIndex = startIndex;
+    this.numTriangles = numTriangles;
+    this.color = color;
+  }
+}
