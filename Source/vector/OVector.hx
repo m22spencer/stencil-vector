@@ -1,7 +1,7 @@
 package vector;
 
 import flash.display3D.*;
-import flash.geom.Matrix3D;
+import flash.geom.*;
 import flash.Vector;
 
 class OVector {
@@ -12,6 +12,7 @@ class OVector {
   var shapes   :Array<DShape>;
   var current  :DShape;
   var justMoved:Bool = false;
+  var bounds   :Rectangle;
   var lastPivotIndex = 0;
   inline public function new() {
     vertices = new Vector();
@@ -59,7 +60,7 @@ shapes  : $shapes
       if (shape.numTriangles == 0)
         continue;
 
-      //*
+      /*
       c.clear(0, 0, 0, 0, 0, 0, Context3DClearMask.STENCIL);
       /*/
       stencil(0, 0, Context3DCompareMode.ALWAYS, Context3DStencilAction.SET);
@@ -70,14 +71,14 @@ shapes  : $shapes
       fn(shape.startIndex, shape.numTriangles, blank);
 
       stencil(0, 1, Context3DCompareMode.NOT_EQUAL, Context3DStencilAction.KEEP);
-      fn(shape.startIndex, shape.numTriangles, shape.color);
-      //fn(shape.boundIndex, 2, shape.color);
+      fn(shape.boundIndex, 2, shape.color);
     }
   }
 
   inline public function vNum() return vertices.length >>> 2;
 
   inline public function pushv(x:Float, y:Float, u:Float, v:Float) {
+    Alg.bound(bounds, x,y);
     vertices.push(x); vertices.push(y); vertices.push(u); vertices.push(v);
   }
 
@@ -125,9 +126,23 @@ shapes  : $shapes
   inline public function beginFill(color:Int, alpha:Float) {
     lastPivotIndex = vNum();
     shapes.push(current = new DShape(lastPivotIndex, indices.length, 0, Alg.mkColor(color, alpha)));
+    bounds = new Rectangle(Math.POSITIVE_INFINITY, Math.POSITIVE_INFINITY,
+                           Math.NEGATIVE_INFINITY, Math.NEGATIVE_INFINITY);
   }
 
   inline public function endFill() {
+    if (current != null && current.numTriangles > 0) {
+      var i = vNum();
+      pushv(bounds.x,     bounds.y,      0, 0);
+      pushv(bounds.width, bounds.y,      0, 0);
+      pushv(bounds.width, bounds.height, 0, 0);
+      pushv(bounds.x,     bounds.height, 0, 0);
+
+      current.boundIndex = indices.length;
+      indices.push(i); indices.push(i+1); indices.push(i+2);
+      indices.push(i); indices.push(i+2); indices.push(i+3);
+    }
+    
     shapes.push(current = new DShape(vNum(), indices.length, 0, [.0, .0, .0, .0]));
     justMoved = false;
   }
@@ -136,6 +151,7 @@ shapes  : $shapes
 class DShape {
   public var startVertex:Int;
   public var startIndex:Int;
+  public var boundIndex:Int;
   public var numTriangles:Int;
   public var color:Array<Float>;
   public function new(startVertex, startIndex, numTriangles, color) { //val startVertex ...... hint hint haxe

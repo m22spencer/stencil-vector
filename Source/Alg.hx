@@ -3,6 +3,8 @@ package ;
 import haxe.macro.Expr;
 import haxe.macro.*;
 
+import Math.*;
+
 class Alg {
   macro public static function debug_assert(e:Expr):Expr {
     return switch (e.expr) {
@@ -29,11 +31,19 @@ class Alg {
     }
   }
 
-  public static function mkColor(rgb:Int, alpha:Float) {
+  public static inline function mkColor(rgb:Int, alpha:Float) {
     return [ ((rgb>>>16) & 0xFF)/256
            , ((rgb>>>8 ) & 0xFF)/256
            , ((rgb     ) & 0xFF)/256
            , alpha
            ];
+  }
+
+  public static inline function bound(bounds:flash.geom.Rectangle, x:Float, y:Float) {
+    bounds.x = min(x, bounds.x);
+    bounds.width = max(x, bounds.width);
+
+    bounds.y = min(y, bounds.y);
+    bounds.height = max(y, bounds.height);
   }
 }

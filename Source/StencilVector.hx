@@ -80,18 +80,10 @@ class SVShape {
             ];
   }
 
-  function bound(x:Float, y:Float) {
-    bounds.x = min(x, bounds.x);
-    bounds.width = max(x, bounds.width);
-
-    bounds.y = min(y, bounds.y);
-    bounds.height = max(y, bounds.height);
-  }
-
   /* Anything that's not a control point */
   public function addPivot(x:Float, y:Float) {
     pivots.push(x); pivots.push(y);
-    bound(x,y);
+    Alg.bound(bounds, x,y);
   }
 
   public function addBezier(xs:Float, ys:Float, cx:Float, cy:Float, xe:Float, ye:Float) {
@@ -99,8 +91,8 @@ class SVShape {
     beziers.push(xs); beziers.push(ys); beziers.push(0); beziers.push(0);
     beziers.push(cx); beziers.push(cy); beziers.push(.5); beziers.push(0);
     beziers.push(xe); beziers.push(ye); beziers.push(1); beziers.push(1);
-    bound(xs,ys); bound(xe,ye);
-    bound(cx,cy); 
+    Alg.bound(bounds, xs,ys); Alg.bound(bounds, xe,ye);
+    Alg.bound(bounds, cx,cy); 
   }
 
   public function buildVectors() {
