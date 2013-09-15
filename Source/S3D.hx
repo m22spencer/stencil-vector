@@ -29,7 +29,7 @@ class S3D {
 
   public static function onReady(e) {
     c = s.context3D;
-    //c.enableErrorChecking = true;
+    c.enableErrorChecking = true;
     var stage = flash.Lib.current.stage;
     c.configureBackBuffer (stage.stageWidth, stage.stageHeight, 0, true);
     c.setDepthTest(false, Context3DCompareMode.ALWAYS);
@@ -41,12 +41,9 @@ class S3D {
     var svg = Tiger.getTiger().join('\n');
 
     var data = new format.svg.SVGData (Xml.parse (svg), true);
-    var lionSV  = new format.svg.SVGRenderer(data).iterate(new UnwrapGfx()).getStencilVector();
+    var lionSV  = new format.svg.SVGRenderer(data).iterate(new UnwrapGfx(new vector.OVector())).get();
 
-    var sv = new StencilVector();
-
-    var render = sv.build(c);
-    var lionRender = lionSV.build(c);
+    lionSV.freeze(c);
 
     var ppm = new PerspectiveProjection();
     ppm.fieldOfView = 90;
@@ -76,10 +73,35 @@ class S3D {
                           m.append(pmatrix);
 
                           c.clear(1,1,1,1);
+
                           var time = haxe.Timer.stamp();
-                          lionRender(m);
+                          for (i in 0...2) {
+                            lionSV.render(c, m);
+                            m.appendTranslation(-1, -1, 0);
+                          }
+
                           var now = haxe.Timer.stamp ();
                           tf.text = "" + (now - time);
+
+                          /*
+                            var v = new vector.OVector();
+
+                            v.beginFill(0xFF0000, 1.0);
+                            v.moveTo(-1, -.5);
+                            v.lineTo( 1, -.5);
+                            v.lineTo( 1,   1);
+                            v.lineTo(-1,   1);
+                            v.lineTo(-1, -.5);
+                            v.endFill();
+
+                            v.beginFill(0x0000FF, 1.0);
+                            v.moveTo(-.5, 0);
+                            v.curveTo(.5, 0, 0, -1.0);
+                            v.lineTo(-.5, 0);
+                            v.endFill();
+
+                            v.render(c);
+                          */
 
                           c.present();
                         });

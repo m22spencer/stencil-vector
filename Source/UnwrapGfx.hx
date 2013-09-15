@@ -4,9 +4,9 @@ import flash.display3D.*;
 import flash.geom.Rectangle;
 
 class UnwrapGfx extends format.gfx.Gfx {
-  var sv:StencilVector;
-  public function new() {
-    sv = new StencilVector();
+  var sv:Dynamic;
+  public function new(sv:Dynamic) {
+    this.sv = sv;
     super();
   }
 
@@ -41,7 +41,7 @@ class UnwrapGfx extends format.gfx.Gfx {
     sv.curveTo(x, y, cx, cy);
   }
 
-  public function getStencilVector() {
+  public function get() {
     return sv;
   }
 }

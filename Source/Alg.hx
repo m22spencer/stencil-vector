@@ -28,4 +28,12 @@ class Alg {
     case _: Context.error("debug_assert expects argument in form of: $expected (op) $expr (example: 10 == 5 + 5)", e.pos);
     }
   }
+
+  public static function mkColor(rgb:Int, alpha:Float) {
+    return [ ((rgb>>>16) & 0xFF)/256
+           , ((rgb>>>8 ) & 0xFF)/256
+           , ((rgb     ) & 0xFF)/256
+           , alpha
+           ];
+  }
 }

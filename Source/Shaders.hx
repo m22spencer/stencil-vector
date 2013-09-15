@@ -55,9 +55,10 @@ class SShader {
     c.drawTriangles(ib, 0, triangles);
 #end
   }
-  inline public function onowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, mvp:flash.geom.Matrix3D) {
+  inline public function onowrite(vb:VertexBuffer3D, ib:IndexBuffer3D, triangles:Int, color:Array<Float>, mvp:flash.geom.Matrix3D) {
 #if flash
     cast(onowri,ONOWrite).mvp = mvp;
+    cast(onowri,ONOWrite).color = new flash.geom.Vector3D(color[0], color[1], color[2], color[3]);
     onowri.bind(c,vb);
     c.drawTriangles(ib, 0, triangles);
     onowri.unbind(c);
@@ -66,6 +67,26 @@ class SShader {
     c.setGLSLVertexBufferAt("pos", vb, 0, FLOAT_2);
     c.setGLSLVertexBufferAt("uv" , vb, 2, FLOAT_2);
     c.drawTriangles(ib, 0, triangles);
+#end
+  }
+
+  inline public function bind(vb:VertexBuffer3D, ib:IndexBuffer3D, mvp:flash.geom.Matrix3D) {
+#if flash
+    var s = cast (onowri, ONOWrite);
+    s.mvp = mvp;
+
+    var cl = new flash.geom.Vector3D(1.0, 0, 0, 1.0);
+    s.color = cl;
+    s.bind(c,vb);
+
+    return function(startIndex, triangles, color) {
+      cl.x = color[0]; cl.y = color[1]; cl.z = color[2]; cl.w = color[3];
+      s.color = cl;
+      s.bind(c,vb);
+      c.drawTriangles(ib, startIndex, triangles);
+    }
+#else
+    throw "Not yet implemented";
 #end
   }
 }
@@ -91,10 +112,10 @@ class ONOWrite extends hxsl.Shader {
                       out = [input.pos.x, input.pos.y, 0.0, 1.0] * mvp;
                     }
                     var uv:Float2;
-                    function fragment() {
+                    function fragment(color:Float4) {
                       var f = uv.x*uv.x - uv.y;
-                      kill(f*-1); //All pixels on the inside of the curve will be less than <
-                      out = [0,0,0,0];
+                      kill(f*-1); //All pixels on the inside of the curve will be less than 0
+                      out = color;
                     }
                    }
 } 

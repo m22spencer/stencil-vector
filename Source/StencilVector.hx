@@ -210,7 +210,7 @@ class SVUtils {
     //Draw a triangle fan of all pivot points, all bezier curves, inverting the stencil mask as we go
     stencil(1, 1, Context3DCompareMode.ALWAYS, Context3DStencilAction.INVERT);
     if (def.fan_ib != null) sshader.nowrite(def.pivots, def.fan_ib, -1, m); 
-    if (def.tri_ib != null) sshader.onowrite(def.beziers, def.tri_ib, -1, m);
+    if (def.tri_ib != null) sshader.onowrite(def.beziers, def.tri_ib, -1, def.color, m);
 
     //The stencil mask is now 1 for valid pixels, and 0 for invalid. Render a quad filtering by stencil value
     stencil(0, 1, Context3DCompareMode.NOT_EQUAL, Context3DStencilAction.KEEP);
