@@ -75,7 +75,7 @@ class S3D {
                           c.clear(1,1,1,1);
 
                           var time = haxe.Timer.stamp();
-                          for (i in 0...2) {
+                          for (i in 0...1) {
                             lionSV.render(c, m);
                             m.appendTranslation(-1, -1, 0);
                           }

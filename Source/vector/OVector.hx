@@ -38,6 +38,7 @@ shapes  : $shapes
     i = c.createIndexBuffer(indices.length);
     i.uploadFromVector(indices, 0, indices.length);
 
+    shapes = shapes.filter(function(x) return x.numTriangles > 0);
   }
 
   inline public function render(c:Context3D, m:Matrix3D) {
@@ -93,14 +94,13 @@ shapes  : $shapes
   }
 
   inline public function addBezier(x:Float, y:Float, cx:Float, cy:Float, x2:Float, y2:Float) {
-    //Must duplicate pivots due to mistmatched uv
-    addPivot(x, y); addPivot(x2, y2); 
     var i = vNum();
-    indices.push(i); indices.push(i+1); indices.push(i+2);
+    //The last pivot pushed will have the correct uv data, we can reuse it
+    indices.push(lastPivotIndex); indices.push(i); indices.push(i+1);
     current.numTriangles++;
-    pushv( x,  y,  0, 0);
     pushv(cx, cy, .5, 0);
     pushv(x2, y2,  1, 1);
+    addPivot(x2, y2);
   }
 
   inline public function moveTo(x:Float, y:Float) {
@@ -117,7 +117,6 @@ shapes  : $shapes
   inline public function curveTo(x:Float, y:Float, cx:Float, cy:Float) {
     if (justMoved) addPivot(last_x, last_y);
     justMoved = false;
-    addPivot(x, y);
     addBezier(last_x, last_y,
               cx, cy,
               last_x = x, last_y = y);
