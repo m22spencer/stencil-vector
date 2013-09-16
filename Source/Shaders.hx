@@ -6,7 +6,11 @@ class SShader {
   var c:Context3D;
   var dshad:SS;
   var nowri:SS;
-  var onowri:SS;
+  var onowri:#if flash
+  ONOWrite;
+  #else
+
+  #end
   
   public function new(c:Context3D) {
     this.c = c;
@@ -70,25 +74,17 @@ class SShader {
 #end
   }
 
-  inline public function bind(vb:VertexBuffer3D, ib:IndexBuffer3D, mvp:flash.geom.Matrix3D) {
 #if flash
-    var s = cast (onowri, ONOWrite);
-    s.mvp = mvp;
-
-    var cl = new flash.geom.Vector3D(1.0, 0, 0, 1.0);
-    s.color = cl;
-    s.bind(c,vb);
-
-    return function(startIndex, triangles, color) {
-      cl.x = color[0]; cl.y = color[1]; cl.z = color[2]; cl.w = color[3];
-      s.color = cl;
-      s.bind(c,vb);
-      c.drawTriangles(ib, startIndex, triangles);
-    }
-#else
-    throw "Not yet implemented";
-#end
+  inline public function bind(vb:VertexBuffer3D, ib:IndexBuffer3D, mvp:flash.geom.Matrix3D) {
+    onowri.mvp = mvp;
+    onowri.bind(c,vb);
   }
+
+  inline public function draw(vb:VertexBuffer3D, ib:IndexBuffer3D, startIndex:Int, triangles:Int, color:flash.Vector<Float>) {
+    c.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, color);
+    c.drawTriangles(ib, startIndex, triangles);
+  }
+#end
 }
 
 #if flash

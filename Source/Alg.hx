@@ -46,4 +46,10 @@ class Alg {
     bounds.y = min(y, bounds.y);
     bounds.height = max(y, bounds.height);
   }
+
+  @:generic public static inline function toVec<T>(a:Iterable<T>):flash.Vector<T> {
+    var v = new flash.Vector();
+    for (x in a) v.push(x);
+    return v;
+  }
 }

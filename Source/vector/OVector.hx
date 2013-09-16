@@ -39,7 +39,7 @@ shapes  : $shapes
     i = c.createIndexBuffer(indices.length);
     i.uploadFromVector(indices, 0, indices.length);
 
-    shapes = shapes.filter(function(x) return x.numTriangles > 0);
+    shapes = shapes.filter(function(x) return x.numTriangles > 0 && x.color[3] > 0);
   }
 
   inline public function render(c:Context3D, m:Matrix3D) {
@@ -52,26 +52,23 @@ shapes  : $shapes
       #end
     }
 
-    var blank = [0.0,0.0,0.0,0.0];
+    var blank = new flash.Vector<Float>(4);
 
-    var fn = sshader.bind(v, i, m);
+    sshader.bind(v, i, m);
 
     for (shape in shapes) {
-      if (shape.numTriangles == 0)
-        continue;
-
       /*
       c.clear(0, 0, 0, 0, 0, 0, Context3DClearMask.STENCIL);
       /*/
       stencil(0, 0, Context3DCompareMode.ALWAYS, Context3DStencilAction.SET);
-      fn(shape.boundIndex, 2, blank);
+      sshader.draw(v, i, shape.boundIndex, 2, blank);
       //*/
 
       stencil(1, 1, Context3DCompareMode.ALWAYS, Context3DStencilAction.INVERT);
-      fn(shape.startIndex, shape.numTriangles, blank);
+      sshader.draw(v, i, shape.startIndex, shape.numTriangles, blank);
 
       stencil(0, 1, Context3DCompareMode.NOT_EQUAL, Context3DStencilAction.KEEP);
-      fn(shape.boundIndex, 2, shape.color);
+      sshader.draw(v, i, shape.boundIndex, 2, shape.color);
     }
   }
 
@@ -125,7 +122,8 @@ shapes  : $shapes
 
   inline public function beginFill(color:Int, alpha:Float) {
     lastPivotIndex = vNum();
-    shapes.push(current = new DShape(lastPivotIndex, indices.length, 0, Alg.mkColor(color, alpha)));
+    var c = Alg.toVec(Alg.mkColor(color, alpha));
+    shapes.push(current = new DShape(lastPivotIndex, indices.length, 0, c));
     bounds = new Rectangle(Math.POSITIVE_INFINITY, Math.POSITIVE_INFINITY,
                            Math.NEGATIVE_INFINITY, Math.NEGATIVE_INFINITY);
   }
@@ -143,7 +141,7 @@ shapes  : $shapes
       indices.push(i); indices.push(i+2); indices.push(i+3);
     }
     
-    shapes.push(current = new DShape(vNum(), indices.length, 0, [.0, .0, .0, .0]));
+    shapes.push(current = new DShape(vNum(), indices.length, 0, new Vector<Float>(4)));
     justMoved = false;
   }
 }
@@ -153,7 +151,7 @@ class DShape {
   public var startIndex:Int;
   public var boundIndex:Int;
   public var numTriangles:Int;
-  public var color:Array<Float>;
+  public var color:Vector<Float>;
   public function new(startVertex, startIndex, numTriangles, color) { //val startVertex ...... hint hint haxe
     this.startVertex = startVertex;
     this.startIndex = startIndex;
