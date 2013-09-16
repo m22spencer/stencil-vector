@@ -2,10 +2,11 @@ package ;
 
 import flash.display3D.*;
 import flash.geom.Rectangle;
+import vector.OVector;
 
 class UnwrapGfx extends format.gfx.Gfx {
-  var sv:Dynamic;
-  public function new(sv:Dynamic) {
+  var sv:OVector;
+  public function new(sv:OVector) {
     this.sv = sv;
     super();
   }

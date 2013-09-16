@@ -2,8 +2,9 @@ package vector;
 
 import flash.display3D.*;
 import flash.geom.*;
-import flash.Vector;
 
+import flash.Vector;
+  
 class OVector {
   var vertices :Vector<Float>;
   var indices  :Vector<UInt>;
@@ -46,13 +47,11 @@ shapes  : $shapes
     var sshader = S3D.sshader;
    
     inline function stencil(a:Int, b:Int, compareMode, action) {
-      #if flash
       c.setStencilReferenceValue(a,b);
       c.setStencilActions(Context3DTriangleFace.FRONT_AND_BACK, compareMode, action, action, action);
-      #end
     }
 
-    var blank = new flash.Vector<Float>(4);
+    var blank = #if flash new Vector<Float>(4) #else [.0, .0, .0, .0] #end;
 
     sshader.bind(v, i, m);
 
@@ -141,7 +140,8 @@ shapes  : $shapes
       indices.push(i); indices.push(i+2); indices.push(i+3);
     }
     
-    shapes.push(current = new DShape(vNum(), indices.length, 0, new Vector<Float>(4)));
+    var c = #if flash new Vector<Float>(4) #else [.0, .0, .0, .0] #end;
+    shapes.push(current = new DShape(vNum(), indices.length, 0, c));
     justMoved = false;
   }
 }

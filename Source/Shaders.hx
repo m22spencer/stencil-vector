@@ -2,6 +2,11 @@ package ;
 
 import flash.display3D.*;
 
+#if !flash
+using flash.display3D.shaders.ShaderUtils;
+#end
+
+
 class SShader {
   var c:Context3D;
   var dshad:SS;
@@ -9,7 +14,7 @@ class SShader {
   var onowri:#if flash
   ONOWrite;
   #else
-
+  SS;
   #end
   
   public function new(c:Context3D) {
@@ -84,6 +89,18 @@ class SShader {
     c.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, color);
     c.drawTriangles(ib, startIndex, triangles);
   }
+#else
+  inline public function bind(vb:VertexBuffer3D, ib:IndexBuffer3D, mvp:flash.geom.Matrix3D) {
+    c.setProgram(onowri);
+    c.setGLSLVertexBufferAt("pos", vb, 0, FLOAT_2);
+    c.setGLSLVertexBufferAt("uv" , vb, 2, FLOAT_2);
+    c.setGLSLProgramConstantsFromMatrix("mvp", mvp);
+  }
+
+  inline public function draw(vb:VertexBuffer3D, ib:IndexBuffer3D, startIndex:Int, triangles:Int, color:flash.Vector<Float>) {
+    c.setGLSLProgramConstantsFromVector4("color", color, 0);
+    c.drawTriangles(ib, startIndex, triangles);
+  }
 #end
 }
 
@@ -140,10 +157,11 @@ class GLSLShaders {
   public static var shaderv = "
 attribute vec2 pos;
 attribute vec2 uv;
+uniform   mat4 mvp;
 varying vec2 vuv;
 void main(void) {
 vuv = uv;
-gl_Position = vec4(pos.x/400.0-.9, pos.y*-1/300.0+1.0, .5, 1.0);
+gl_Position = vec4(pos, 0, 1) * mvp;
 }
 ";
 
@@ -155,12 +173,13 @@ gl_FragColor = color;
 
   public static var onowritef = "
 varying vec2 vuv;
+uniform vec4 color;
 void main(void) {
 float f = vuv.x*vuv.x - vuv.y;
 if (f > 0)
 discard;
 else
-gl_FragColor = vec4(0);
+gl_FragColor = color;
 }";
 
   public static var nowritef = "

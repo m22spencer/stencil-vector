@@ -39,18 +39,16 @@ class S3D {
     sshader = new SShader(c);
 
     var svg = Tiger.getTiger().join('\n');
+    trace("joined");
 
     var data = new format.svg.SVGData (Xml.parse (svg), true);
+    trace("parsed");
+
     var lionSV  = new format.svg.SVGRenderer(data).iterate(new UnwrapGfx(new vector.OVector())).get();
+    trace("converted");
 
     lionSV.freeze(c);
-
-    var ppm = new PerspectiveProjection();
-    ppm.fieldOfView = 90;
-    ppm.focalLength = 10;
-    ppm.projectionCenter = new Point(0, 0);
-
-    var pmatrix = ppm.toMatrix3D();
+    trace("frozen");
 
     var tf = new flash.text.TextField();
     flash.Lib.current.addChild(tf);
@@ -66,42 +64,21 @@ class S3D {
                           var m = new Matrix3D();
                           m.appendScale(1/600, 1/600, 1.0);
                           m.appendTranslation(-.5, -.5, 0);
-                          m.appendRotation(180, new Vector3D(1, 0, 0, 0));
-                          m.appendRotation(-(s.mouseX - hw), new Vector3D(0, 1, 0, 0));
-                          m.appendRotation(-(s.mouseY - hh), new Vector3D(1, 0, 0, 0));
-                          m.appendTranslation(0, 0, 5);
-                          m.append(pmatrix);
+                          //m.appendRotation(180, new Vector3D(1, 0, 0, 0));
+                          //m.appendRotation(-(s.mouseX - hw), new Vector3D(0, 1, 0, 0));
+                          //m.appendRotation(-(s.mouseY - hh), new Vector3D(1, 0, 0, 0));
+                          //m.appendTranslation(0, 0, 5);
 
-                          c.clear(1,1,1,1);
+                          c.clear(1,0,0,1);
 
                           var time = haxe.Timer.stamp();
-                          for (i in 0...3) {
-                            lionSV.render(c, m);
-                            m.appendTranslation(-1, -1, 0);
-                          }
+                          //for (i in 0...3) {
+                          lionSV.render(c, m);
+                          //  m.appendTranslation(-.2, -.2, 0);
+                          //}
 
                           var now = haxe.Timer.stamp ();
                           tf.text = "" + (now - time);
-
-                          /*
-                            var v = new vector.OVector();
-
-                            v.beginFill(0xFF0000, 1.0);
-                            v.moveTo(-1, -.5);
-                            v.lineTo( 1, -.5);
-                            v.lineTo( 1,   1);
-                            v.lineTo(-1,   1);
-                            v.lineTo(-1, -.5);
-                            v.endFill();
-
-                            v.beginFill(0x0000FF, 1.0);
-                            v.moveTo(-.5, 0);
-                            v.curveTo(.5, 0, 0, -1.0);
-                            v.lineTo(-.5, 0);
-                            v.endFill();
-
-                            v.render(c);
-                          */
 
                           c.present();
                         });
